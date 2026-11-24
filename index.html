@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="icon" type="image/png" href="icon-192.png">
+<meta name="theme-color" content="#181c3c">
+<meta name="apple-mobile-web-app-title" content="My Roster">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<title>My Shift Roster</title>
+<style>
+:root{--bg:#fff;--fg:#1f1f1e;--mut:#6b6a66;--line:#e2e0d8;--card:#f7f6f2;
+--dB:#FAEEDA;--dF:#633806;--nB:#EEEDFE;--nF:#3C3489;--oB:#F1EFE8;--oF:#5f5e5a;--acc:#185FA5;
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#1c1c1a;--fg:#f1efe8;--mut:#a09e96;--line:#3a3a37;--card:#262624;
+--dB:#5a3a0a;--dF:#FAC775;--nB:#3C3489;--nF:#CECBF6;--oB:#2c2c2a;--oF:#b4b2a9;--acc:#85B7EB}}
+:root[data-theme="dark"]{--bg:#1c1c1a;--fg:#f1efe8;--mut:#a09e96;--line:#3a3a37;--card:#262624;
+--dB:#5a3a0a;--dF:#FAC775;--nB:#3C3489;--nF:#CECBF6;--oB:#2c2c2a;--oF:#b4b2a9;--acc:#85B7EB}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--fg);font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+.wrap{max-width:480px;margin:0 auto;padding:12px}
+.top{display:flex;align-items:center;justify-content:space-between;margin:4px 0 10px}
+.top h1{font-size:19px;font-weight:600;margin:0}
+.nav button{background:var(--card);border:1px solid var(--line);color:var(--fg);border-radius:10px;width:42px;height:38px;font-size:18px}
+.nav button.t{width:auto;padding:0 12px;font-size:14px}
+.grid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px}
+.wd{text-align:center;font-size:12px;color:var(--mut);padding:4px 0}
+.c{aspect-ratio:1/1.1;border-radius:10px;border:2px solid transparent;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;cursor:pointer;position:relative;font-size:12px}
+.c b{font-size:15px;font-weight:600}
+.c.D{background:var(--dB);color:var(--dF)}.c.N{background:var(--nB);color:var(--nF)}.c.O{background:var(--oB);color:var(--oF)}
+.c.today{border-color:var(--acc)}
+.c.e::after{content:"";position:absolute;top:4px;right:4px;width:6px;height:6px;border-radius:50%;background:currentColor}
+.c.empty{visibility:hidden}
+.sum{display:flex;gap:8px;margin:12px 0}
+.sum div{flex:1;border-radius:10px;padding:8px;text-align:center;font-size:13px}
+.sum b{display:block;font-size:20px}
+.sum .D{background:var(--dB);color:var(--dF)}.sum .N{background:var(--nB);color:var(--nF)}.sum .O{background:var(--oB);color:var(--oF)}
+.hint{font-size:12px;color:var(--mut);line-height:1.5;margin:6px 2px}
+.link{background:none;border:none;color:var(--mut);font-size:12px;text-decoration:underline;padding:6px 2px}
+#ov{position:fixed;inset:0;background:rgba(0,0,0,.45);display:none;align-items:flex-end;justify-content:center;z-index:20}
+#ov.on{display:flex}
+.sh{background:var(--bg);width:100%;max-width:480px;border-radius:18px 18px 0 0;padding:16px 16px calc(16px + env(safe-area-inset-bottom,0px))}
+.sh h2{font-size:17px;margin:0 0 2px}.sh p{margin:0 0 10px;font-size:13px;color:var(--mut)}
+.sh h3{font-size:13px;margin:12px 0 6px}
+.row{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}.row.f{grid-template-columns:repeat(2,1fr)}
+.row button{border:1px solid var(--line);border-radius:10px;padding:11px 4px;font-size:14px;background:var(--card);color:var(--fg)}
+.row .D{background:var(--dB);color:var(--dF)}.row .N{background:var(--nB);color:var(--nF)}.row .O{background:var(--oB);color:var(--oF)}
+.x{width:100%;margin-top:12px;padding:11px;border-radius:10px;border:1px solid var(--line);background:none;color:var(--fg);font-size:14px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="top">
+    <h1 id="ttl"></h1>
+    <div class="nav"><button id="pv" aria-label="Previous month">‹</button> <button class="t" id="td">Today</button> <button id="nx" aria-label="Next month">›</button></div>
+  </div>
+  <div class="grid" id="wd"></div>
+  <div class="grid" id="g" style="margin-top:4px"></div>
+  <div class="sum"><div class="D">☀ Day<b id="sD">0</b></div><div class="N">🌙 Night<b id="sN">0</b></div><div class="O">Off<b id="sO">0</b></div></div>
+  <p class="hint">Tap a day to change it. A dot on a day means you changed it by hand. Day shift and night shift are 7 to 7.</p>
+  <button class="link" id="rs">Reset everything</button>
+</div>
+
+<div id="ov"><div class="sh">
+  <h2 id="sd"></h2><p id="sc"></p>
+  <h3>Swap only this day</h3>
+  <div class="row" id="r1"></div>
+  <h3>Start the pattern from this day</h3>
+  <div class="row f" id="r2"></div>
+  <button class="x" id="un">Remove my change on this day</button>
+  <button class="x" id="cl">Close</button>
+</div></div>
+
+<script>
+var CYC=['D','O','N','O'];
+var NAME={D:'Day shift',N:'Night shift',O:'Off'};
+var ICON={D:'☀',N:'🌙',O:'Off'};
+var KEY='roster-v1';
+var st=null;
+function load(){try{var r=localStorage.getItem(KEY);if(r){st=JSON.parse(r)}}catch(e){}
+  if(!st||!st.anchors){st={anchors:{},over:{}};st.anchors[k(new Date())]=0}}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(st))}catch(e){}}
+function p2(n){return n<10?'0'+n:''+n}
+function k(d){return d.getFullYear()+'-'+p2(d.getMonth()+1)+'-'+p2(d.getDate())}
+function dn(key){var a=key.split('-');return Math.round(Date.UTC(+a[0],+a[1]-1,+a[2])/864e5)}
+function base(key){
+  var ks=Object.keys(st.anchors).sort();var best=ks[0];
+  for(var i=0;i<ks.length;i++){if(ks[i]<=key)best=ks[i]}
+  var idx=(st.anchors[best]+(dn(key)-dn(best)))%4;if(idx<0)idx+=4;
+  return CYC[idx];
+}
+function shift(key){return st.over[key]||base(key)}
+var cur=new Date();cur=new Date(cur.getFullYear(),cur.getMonth(),1);
+var sel=null;
+var MN=['January','February','March','April','May','June','July','August','September','October','November','December'];
+function $(i){return document.getElementById(i)}
+function render(){
+  $('ttl').textContent=MN[cur.getMonth()]+' '+cur.getFullYear();
+  var g=$('g');g.innerHTML='';
+  var first=new Date(cur.getFullYear(),cur.getMonth(),1).getDay();
+  var days=new Date(cur.getFullYear(),cur.getMonth()+1,0).getDate();
+  var cnt={D:0,N:0,O:0};var tk=k(new Date());
+  for(var i=0;i<first;i++){var e=document.createElement('div');e.className='c empty';g.appendChild(e)}
+  for(var d=1;d<=days;d++){
+    var key=cur.getFullYear()+'-'+p2(cur.getMonth()+1)+'-'+p2(d);
+    var s=shift(key);cnt[s]++;
+    var c=document.createElement('div');
+    c.className='c '+s+(key===tk?' today':'')+(st.over[key]?' e':'');
+    c.innerHTML='<b>'+d+'</b><span>'+ICON[s]+'</span>';
+    (function(kk){c.onclick=function(){openSheet(kk)}})(key);
+    g.appendChild(c);
+  }
+  $('sD').textContent=cnt.D;$('sN').textContent=cnt.N;$('sO').textContent=cnt.O;
+}
+function btn(label,cls,fn){var b=document.createElement('button');b.textContent=label;b.className=cls||'';b.onclick=fn;return b}
+function openSheet(key){
+  sel=key;var a=key.split('-');
+  var dt=new Date(+a[0],+a[1]-1,+a[2]);
+  $('sd').textContent=dt.toLocaleDateString(undefined,{weekday:'long',day:'numeric',month:'long'});
+  $('sc').textContent='Now: '+NAME[shift(key)];
+  var r1=$('r1');r1.innerHTML='';
+  ['D','N','O'].forEach(function(s){r1.appendChild(btn(NAME[s],s,function(){st.over[sel]=s;done()}))});
+  var r2=$('r2');r2.innerHTML='';
+  [['Day shift','D',0],['Night shift','N',2],['Off (night shift next)','O',1],['Off (day shift next)','O',3]].forEach(function(o){
+    r2.appendChild(btn(o[0],o[1],function(){st.anchors[sel]=o[2];delete st.over[sel];done()}))});
+  $('un').style.display=st.over[key]?'block':'none';
+  $('ov').className='on';
+}
+function done(){save();$('ov').className='';render()}
+$('un').onclick=function(){delete st.over[sel];done()};
+$('cl').onclick=function(){$('ov').className=''};
+$('ov').onclick=function(e){if(e.target===$('ov'))$('ov').className=''};
+$('pv').onclick=function(){cur=new Date(cur.getFullYear(),cur.getMonth()-1,1);render()};
+$('nx').onclick=function(){cur=new Date(cur.getFullYear(),cur.getMonth()+1,1);render()};
+$('td').onclick=function(){var n=new Date();cur=new Date(n.getFullYear(),n.getMonth(),1);render()};
+$('rs').onclick=function(){if(confirm('Reset all shifts and start again?')){st={anchors:{},over:{}};st.anchors[k(new Date())]=0;save();render()}};
+['S','M','T','W','T','F','S'].forEach(function(w){var e=document.createElement('div');e.className='wd';e.textContent=w;$('wd').appendChild(e)});
+load();render();
+if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw.js').catch(function(){})})}
+</script>
+</body>
+</html>
